@@ -303,6 +303,27 @@
         return "";
     }
 
+    async function resolvePlayerIdFromServer(rawName) {
+        const target = normalizeName(rawName);
+        if (!target) return "";
+
+        try {
+            const response = await fetch(`/api/v1/jugadores/buscar/${encodeURIComponent(rawName)}`);
+            if (!response.ok) return "";
+
+            const results = await response.json();
+            if (!Array.isArray(results) || !results.length) return "";
+
+            const exact = results.find(p => normalizeName(p.nombre) === target);
+            if (exact?.id) return String(exact.id);
+
+            if (results.length === 1 && results[0]?.id) return String(results[0].id);
+            return "";
+        } catch (_) {
+            return "";
+        }
+    }
+
     function updatePlayerId(num) {
         const nameInput = document.getElementById(`p${num}_name`);
         const idInput = document.getElementById(`p${num}_id`);
@@ -335,16 +356,18 @@
     async function handleRemoteStart(event) {
         event.preventDefault();
 
-        // Robust Player ID recovery before sending
-        for (let i = 1; i <= 4; i++) {
-            updatePlayerId(i);
+        // Resolver IDs de forma robusta (local + fallback servidor)
+        const names = [1, 2, 3, 4].map(i => document.getElementById(`p${i}_name`).value || "");
+        const idsResolved = [];
+        for (let i = 0; i < 4; i++) {
+            let id = resolvePlayerIdByName(names[i]);
+            if (!id) id = await resolvePlayerIdFromServer(names[i]);
+            idsResolved.push(id || "");
+            document.getElementById(`p${i + 1}_id`).value = id || "";
         }
 
         const cancha = document.getElementById('formCanchaNum').value;
-        const p1 = document.getElementById('p1_id').value;
-        const p2 = document.getElementById('p2_id').value;
-        const p3 = document.getElementById('p3_id').value;
-        const p4 = document.getElementById('p4_id').value;
+        const [p1, p2, p3, p4] = idsResolved;
 
         const sets = document.getElementById('match_sets').value;
         const oro = document.getElementById('match_oro').value === 'true';
