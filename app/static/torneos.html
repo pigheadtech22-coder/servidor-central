@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Torneos - PADELSYS{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="header-top" style="margin-bottom: 32px;">
+        <h2 class="section-title">🏆 Gestión de Torneos</h2>
+        <button class="btn btn-primary" onclick="openModal('modal-torneo')">+ Nuevo Torneo</button>
+    </div>
+
+    {% if torneos %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 24px;">
+        {% for torneo in torneos %}
+        <div class="card" style="border-top: 4px solid var(--secondary);">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.4rem; color: var(--light);">{{ torneo.nombre }}</h3>
+                    <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 4px;">
+                        📅 {{ torneo.fecha_inicio.strftime('%d/%m/%Y') if torneo.fecha_inicio else 'Sin fecha' }}
+                    </div>
+                </div>
+                <span
+                    class="badge {% if torneo.finalizado %}badge-ghost{% elif torneo.activo %}badge-secondary{% else %}badge-ghost{% endif %}">
+                    {{ 'FINALIZADO' if torneo.finalizado else ('ACTIVO' if torneo.activo else 'INACTIVO') }}
+                </span>
+            </div>
+
+            <p style="font-size: 0.9rem; color: #cbd5e1; margin-bottom: 20px; line-height: 1.4;">
+                {{ torneo.descripcion if torneo.descripcion else 'Sin descripción disponible.' }}
+            </p>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px;">
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase;">Tipo</div>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--secondary);">{{
+                        torneo.tipo_torneo|upper }}</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase;">Sets</div>
+                    <div style="font-size: 0.9rem; font-weight: 700; color: var(--light);">{{ torneo.num_sets }} ({{
+                        torneo.puntos_set }})</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase;">Punto Oro</div>
+                    <div
+                        style="font-size: 0.9rem; font-weight: 700; color: {{ 'var(--primary)' if torneo.punto_oro else '#ef4444' }};">
+                        {{ 'SÍ' if torneo.punto_oro else 'NO' }}
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-primary" style="flex: 2;" onclick="verTorneo({{ torneo.id }})">WIZARD /
+                    CUADRO</button>
+                <button class="btn btn-ghost" style="flex: 1;" onclick="editarTorneo({{ torneo.id }})">REGLAS</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 60px;">
+        <div style="font-size: 3rem; margin-bottom: 16px;">🏆</div>
+        <h3>No hay torneos activos</h3>
+        <p style="color: #94a3b8;">Configura tu primer torneo para generar cuadros y rankings.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para Torneo -->
+<div id="modal-torneo" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <span class="close" onclick="closeModal('modal-torneo')">&times;</span>
+        <h2 class="section-title">🏆 Configuración de Torneo</h2>
+        <form onsubmit="guardarTorneo(event)">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="color: var(--secondary);">Nombre del Torneo</label>
+                <input type="text" id="nombre" required class="btn btn-ghost"
+                    style="width: 100%; text-align: left; color: var(--light);">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label style="color: var(--secondary);">Formato</label>
+                    <select id="tipo_torneo" class="btn btn-ghost"
+                        style="width: 100%; text-align: left; color: var(--light); background: var(--darker);">
+                        <option value="eliminacion">Eliminación Directa</option>
+                        <option value="round_robin">Round Robin (Liga)</option>
+                        <option value="grupos_eliminacion">Grupos + Eliminación</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label style="color: var(--secondary);">Fecha de Inicio</label>
+                    <input type="date" id="fecha_inicio" class="btn btn-ghost"
+                        style="width: 100%; text-align: left; color: var(--light);">
+                </div>
+            </div>
+
+            <div
+                style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 16px; margin-bottom: 24px; border: 1px solid var(--glass-border);">
+                <h4 style="margin-bottom: 16px; font-size: 0.9rem; letter-spacing: 0.1em; color: var(--primary);">
+                    REGLAMENTACIÓN</h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;">
+                    <div>
+                        <label style="font-size: 0.7rem; opacity: 0.6;">Sets</label>
+                        <select id="num_sets" class="btn btn-ghost"
+                            style="width: 100%; font-size: 0.8rem; background: var(--darker); color: var(--light);">
+                            <option value="1">1 Set</option>
+                            <option value="3" selected>3 Sets</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.7rem; opacity: 0.6;">Puntos Set</label>
+                        <input type="number" id="puntos_set" value="6" class="btn btn-ghost"
+                            style="width: 100%; font-size: 0.8rem; color: var(--light);">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.7rem; opacity: 0.6;">Punto de Oro</label>
+                        <select id="punto_oro" class="btn btn-ghost"
+                            style="width: 100%; font-size: 0.8rem; background: var(--darker); color: var(--light);">
+                            <option value="true">Activado</option>
+                            <option value="false" selected>Desactivado (Ventajas)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('modal-torneo')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Crear Torneo</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+async function guardarTorneo(e) {
+e.preventDefault();
+const data = {
+nombre: document.getElementById('nombre').value,
+tipo_torneo: document.getElementById('tipo_torneo').value,
+fecha_inicio: document.getElementById('fecha_inicio').value,
+num_sets: parseInt(document.getElementById('num_sets').value),
+puntos_set: parseInt(document.getElementById('puntos_set').value),
+punto_oro: document.getElementById('punto_oro').value === 'true'
+};
+
+try {
+const res = await fetch('/api/v1/torneos/', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(data)
+});
+if (res.ok) location.reload();
+else alert('Error al crear torneo');
+} catch (err) {
+console.error(err);
+}
+}
+
+function verTorneo(id) {
+alert('Abriendo Wizard de Torneo ' + id + '...');
+}
+
+function editarTorneo(id) {
+alert('Editando reglas del torneo ' + id + '...');
+}
+{% endblock %}

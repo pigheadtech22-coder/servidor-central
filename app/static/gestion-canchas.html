@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+
+{% block title %}Gestión de Canchas y Marcadores{% endblock %}
+
+{% block content %}
+<style>
+    .gestion-container {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    .header-seccion {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+        border-radius: 20px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        text-align: center;
+    }
+    
+    .header-seccion h1 {
+        color: white;
+        font-size: 2.5rem;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+    
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 1.5rem;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        text-align: center;
+        color: white;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .canchas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .cancha-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        padding: 2rem;
+        border: 2px solid;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .cancha-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    }
+    
+    .cancha-online {
+        border-color: #10B981;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+    }
+    
+    .cancha-offline {
+        border-color: #EF4444;
+        box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
+    }
+    
+    .cancha-sin-marcador {
+        border-color: #6B7280;
+        box-shadow: 0 0 20px rgba(107, 114, 128, 0.3);
+    }
+    
+    .cancha-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .cancha-numero {
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        color: white;
+        padding: 0.8rem 1.5rem;
+        border-radius: 15px;
+        font-weight: bold;
+        font-size: 1.3rem;
+    }
+    
+    .estado-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .estado-online {
+        background: rgba(16, 185, 129, 0.8);
+        color: white;
+        animation: pulse-green 2s infinite;
+    }
+    
+    .estado-offline {
+        background: rgba(239, 68, 68, 0.8);
+        color: white;
+    }
+    
+    .estado-sin-marcador {
+        background: rgba(107, 114, 128, 0.8);
+        color: white;
+    }
+    
+    @keyframes pulse-green {
+        0%, 100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); }
+        50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.8); }
+    }
+    
+    .marcador-info {
+        background: rgba(255, 255, 255, 0.05);
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 1rem;
+    }
+    
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .info-row:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+    
+    .info-label {
+        opacity: 0.8;
+        font-size: 0.9rem;
+    }
+    
+    .info-value {
+        font-weight: bold;
+    }
+    
+    .partido-activo {
+        background: rgba(245, 158, 11, 0.2);
+        border: 1px solid rgba(245, 158, 11, 0.5);
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1rem;
+    }
+    
+    .partido-activo h4 {
+        margin: 0 0 0.5rem 0;
+        color: #FCD34D;
+    }
+    
+    .acciones-cancha {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-top: 1rem;
+    }
+    
+    .btn-accion {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+        text-align: center;
+    }
+    
+    .btn-primary { background: rgba(59, 130, 246, 0.8); color: white; }
+    .btn-success { background: rgba(16, 185, 129, 0.8); color: white; }
+    .btn-warning { background: rgba(245, 158, 11, 0.8); color: white; }
+    .btn-danger { background: rgba(239, 68, 68, 0.8); color: white; }
+    .btn-secondary { background: rgba(107, 114, 128, 0.8); color: white; }
+    
+    .btn-accion:hover {
+        transform: translateY(-2px);
+        opacity: 0.9;
+    }
+    
+    .cancha-vacia {
+        text-align: center;
+        padding: 3rem;
+        opacity: 0.6;
+    }
+    
+    .cancha-vacia h3 {
+        margin: 0 0 1rem 0;
+        font-size: 1.5rem;
+    }
+    
+    .refresh-info {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 0.5rem 1rem;
+        border-radius: 15px;
+        font-size: 0.8rem;
+    }
+    
+    .floating-refresh {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(45deg, #667eea, #764ba2);
+        border-radius: 50%;
+        border: none;
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        transition: transform 0.3s ease;
+    }
+    
+    .floating-refresh:hover {
+        transform: scale(1.1);
+    }
+    
+    .instrucciones {
+        background: rgba(255, 255, 255, 0.1);
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .instrucciones h3 {
+        margin: 0 0 1rem 0;
+        color: #667eea;
+    }
+    
+    .instrucciones ul {
+        margin: 0;
+        padding-left: 1.5rem;
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .instrucciones li {
+        margin-bottom: 0.5rem;
+    }
+</style>
+
+<div class="gestion-container">
+    <div class="refresh-info">
+        🕒 {{ timestamp.strftime('%H:%M:%S') }}
+    </div>
+    
+    <div class="header-seccion">
+        <h1>🏟️ Gestión de Canchas y Marcadores</h1>
+        <p>Monitor de marcadores conectados y administración de canchas</p>
+    </div>
+    
+    <!-- Estadísticas generales -->
+    <div class="stats-overview">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_marcadores }}</div>
+            <div class="stat-label">Marcadores Registrados</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ marcadores_online }}</div>
+            <div class="stat-label">Conectados Ahora</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ canchas_ocupadas }}</div>
+            <div class="stat-label">Canchas en Uso</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ total_marcadores - marcadores_online }}</div>
+            <div class="stat-label">Desconectados</div>
+        </div>
+    </div>
+    
+    <!-- Instrucciones -->
+    <div class="instrucciones">
+        <h3>💡 Configurar Marcadores</h3>
+        <ul>
+            <li><strong>En cada marcador:</strong> Ir a <code>/config</code> (ej: http://marcador:5173/config)</li>
+            <li><strong>Configurar:</strong> Número de cancha y URL del servidor central</li>
+            <li><strong>Guardar:</strong> Los marcadores aparecerán automáticamente aquí</li>
+            <li><strong>Prueba:</strong> Usar botón "Probar Conexión" para verificar</li>
+        </ul>
+    </div>
+    
+    {% if marcadores %}
+    <div class="canchas-grid">
+        {% for marcador_info in marcadores %}
+        <div class="cancha-card {% if marcador_info.estado_conexion == 'online' %}cancha-online{% else %}cancha-offline{% endif %}">
+            <div class="cancha-header">
+                <div class="cancha-numero">CANCHA {{ marcador_info.marcador.cancha_numero }}</div>
+                <div class="estado-badge estado-{{ marcador_info.estado_conexion }}">
+                    {% if marcador_info.estado_conexion == 'online' %}
+                        🟢 ONLINE
+                    {% else %}
+                        🔴 OFFLINE
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="marcador-info">
+                <div class="info-row">
+                    <span class="info-label">📱 Nombre:</span>
+                    <span class="info-value">{{ marcador_info.marcador.nombre }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">📍 Ubicación:</span>
+                    <span class="info-value">{{ marcador_info.marcador.ubicacion }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">🌐 IP:</span>
+                    <span class="info-value">{{ marcador_info.marcador.ip_address }}:{{ marcador_info.marcador.puerto }}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">🕒 Última conexión:</span>
+                    <span class="info-value">
+                        {% if marcador_info.tiempo_desconectado_minutos < 1 %}
+                            Ahora mismo
+                        {% elif marcador_info.tiempo_desconectado_minutos < 60 %}
+                            Hace {{ marcador_info.tiempo_desconectado_minutos }} min
+                        {% else %}
+                            {{ marcador_info.marcador.ultima_conexion.strftime('%d/%m %H:%M') }}
+                        {% endif %}
+                    </span>
+                </div>
+                {% if marcador_info.marcador.version %}
+                <div class="info-row">
+                    <span class="info-label">📦 Versión:</span>
+                    <span class="info-value">{{ marcador_info.marcador.version }}</span>
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if marcador_info.partido_activo %}
+            <div class="partido-activo">
+                <h4>🏆 Partido en Curso</h4>
+                <p><strong>Estado:</strong> {{ marcador_info.partido_activo.estado|replace('_', ' ')|title }}</p>
+                {% if marcador_info.partido_activo.sets_equipo1 is not none %}
+                    <p><strong>Resultado:</strong> {{ marcador_info.partido_activo.sets_equipo1 }} - {{ marcador_info.partido_activo.sets_equipo2 }}</p>
+                {% endif %}
+                {% if marcador_info.partido_activo.fecha_programada %}
+                    <p><strong>Programado:</strong> {{ marcador_info.partido_activo.fecha_programada.strftime('%H:%M') }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div class="acciones-cancha">
+                <a href="{{ marcador_info.url_acceso }}" target="_blank" class="btn-accion btn-primary">
+                    🖥️ Abrir Marcador
+                </a>
+                <button class="btn-accion btn-success" onclick="probarConexion({{ marcador_info.marcador.cancha_numero }})">
+                    🔍 Probar
+                </button>
+                <button class="btn-accion btn-warning" onclick="editarMarcador({{ marcador_info.marcador.id }})">
+                    ✏️ Editar
+                </button>
+                <button class="btn-accion btn-danger" onclick="eliminarMarcador({{ marcador_info.marcador.id }})">
+                    🗑️ Eliminar
+                </button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="cancha-card cancha-sin-marcador">
+        <div class="cancha-vacia">
+            <h3>No hay marcadores registrados</h3>
+            <p>Los marcadores aparecerán aquí automáticamente cuando se conecten al servidor central.</p>
+            <p><strong>Para conectar un marcador:</strong></p>
+            <ol style="text-align: left; display: inline-block; margin-top: 1rem;">
+                <li>Abrir marcador en http://ip-marcador:5173</li>
+                <li>Ir a http://ip-marcador:5173/config</li>
+                <li>Configurar número de cancha y URL servidor</li>
+                <li>Guardar configuración</li>
+            </ol>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Botón flotante para refrescar -->
+    <button class="floating-refresh" onclick="location.reload()" title="Refrescar información">
+        🔄
+    </button>
+</div>
+
+<script>
+    async function probarConexion(canchaNumero) {
+        try {
+            const response = await fetch(`/api/v1/marcadores/ping/${canchaNumero}`, {
+                method: 'POST'
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'online') {
+                alert(`✅ Cancha ${canchaNumero}: Online (${result.response_time_ms}ms)`);
+            } else {
+                alert(`❌ Cancha ${canchaNumero}: ${result.error || 'Sin conexión'}`);
+            }
+        } catch (error) {
+            alert(`❌ Error probando conexión: ${error.message}`);
+        }
+    }
+    
+    function editarMarcador(marcadorId) {
+        alert(`Editar marcador ID: ${marcadorId}`);
+        // TODO: Implementar modal de edición
+    }
+    
+    async function eliminarMarcador(marcadorId) {
+        if (confirm('¿Estás seguro de que quieres eliminar este marcador?')) {
+            try {
+                const response = await fetch(`/api/v1/marcadores/${marcadorId}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    alert('✅ Marcador eliminado correctamente');
+                    location.reload(); // Recargar para actualizar la lista
+                } else {
+                    const error = await response.json();
+                    alert(`❌ Error al eliminar marcador: ${error.detail || 'Error desconocido'}`);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('❌ Error de conexión al eliminar marcador');
+            }
+        }
+    }
+    
+    // Auto-refresh cada 30 segundos
+    setTimeout(() => {
+        location.reload();
+    }, 30000);
+</script>
+{% endblock %}

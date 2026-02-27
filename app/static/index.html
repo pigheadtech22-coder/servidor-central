@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PADELSYS | Central Server</title>
+    <style>
+        :root {
+            --primary: #c9ff00;
+            --secondary: #00f0ff;
+            --dark: #0a0a0c;
+            --darker: #050506;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --light: #f8fafc;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--darker);
+            background-image:
+                radial-gradient(circle at 20% 20%, rgba(201, 255, 0, 0.05) 0%, transparent 40%),
+                radial-gradient(circle at 80% 80%, rgba(0, 240, 255, 0.05) 0%, transparent 40%);
+            margin: 0;
+            padding: 0;
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1000px;
+            width: 90%;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-area {
+            margin-bottom: 40px;
+        }
+
+        .logo-text {
+            font-size: 4rem;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+            filter: drop-shadow(0 0 20px rgba(201, 255, 0, 0.3));
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            margin-top: 12px;
+            font-weight: 300;
+            letter-spacing: 0.1em;
+        }
+
+        .main-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 60px 0;
+        }
+
+        .btn {
+            padding: 18px 40px;
+            border-radius: 12px;
+            font-weight: 800;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 1rem;
+            letter-spacing: 0.05em;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--darker);
+            box-shadow: 0 0 30px rgba(201, 255, 0, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-5px) scale(1.02);
+            box-shadow: 0 0 50px rgba(201, 255, 0, 0.4);
+        }
+
+        .btn-ghost {
+            background: var(--glass);
+            color: var(--light);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-5px);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-top: 80px;
+        }
+
+        .feature-card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            padding: 32px;
+            border-radius: 20px;
+            text-align: left;
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: var(--secondary);
+            background: rgba(0, 240, 255, 0.02);
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .feature-card h3 {
+            margin: 0 0 12px 0;
+            font-size: 1.1rem;
+            color: var(--light);
+        }
+
+        .feature-card p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .bg-blur {
+            position: fixed;
+            width: 40vw;
+            height: 40vw;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="bg-blur" style="top: -10%; left: -10%; background: var(--primary);"></div>
+    <div class="bg-blur" style="bottom: -10%; right: -10%; background: var(--secondary);"></div>
+
+    <div class="container">
+        <div class="logo-area">
+            <h1 class="logo-text">PADELSYS</h1>
+            <div class="tagline">CENTRAL COMMAND SERVER</div>
+        </div>
+
+        <p style="color: #94a3b8; max-width: 600px; margin: 0 auto 40px; line-height: 1.6;">
+            Gestión inteligente de canchas, torneos y publicidad en tiempo real.
+            El cerebro que conecta tus marcadores y pantallas públicas.
+        </p>
+
+        <div class="main-actions">
+            <a href="/dashboard" class="btn btn-primary">ENTRAR AL DASHBOARD</a>
+            <a href="/docs" class="btn btn-ghost">API DOCS</a>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <span class="feature-icon">🧠</span>
+                <h3>El Cerebro</h3>
+                <p>Control total sobre la secuencia de slides y tiempos de visualización en pantallas.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🏆</span>
+                <h3>Modo Torneo</h3>
+                <p>Wizard avanzado para generar cuadros de eliminación y ligas automáticamente.</p>
+            </div>
+            <div class="feature-card">
+                <span class="feature-icon">🏸</span>
+                <h3>Tracking Realtime</h3>
+                <p>Conexión directa con marcadores Raspberry Pi para marcadores en vivo.</p>
+            </div>
+        </div>
+
+        <div style="margin-top: 80px; font-size: 0.7rem; color: #475569; letter-spacing: 0.2em;">
+            © 2026 PADELSYS OPERATING SYSTEM | v2.0 PREMIUM
+        </div>
+    </div>
+</body>
+
+</html>

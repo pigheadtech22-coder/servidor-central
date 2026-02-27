@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}El Cerebro - PADELSYS{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="header-top" style="margin-bottom: 32px;">
+        <h2 class="section-title">🧠 El Cerebro: Control de Pantallas</h2>
+        <div
+            style="background: var(--darker); padding: 8px 16px; border-radius: 12px; border: 1px solid var(--primary);">
+            <span style="font-size: 0.7rem; color: var(--primary); font-weight: 800; letter-spacing: 0.1em;">TV STATUS:
+                ONLINE</span>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 32px; border-left: 4px solid var(--secondary);">
+        <h3 style="color: var(--light); margin-bottom: 12px;">Secuencia de Visualización</h3>
+        <p style="color: #94a3b8; font-size: 0.9rem;">Organiza el orden y la duración de lo que se transmite a las
+            pantallas del club.</p>
+    </div>
+
+    <div id="slides-container" style="display: flex; flex-direction: column; gap: 16px;">
+        <!-- Se carga via JS -->
+        <div style="text-align: center; padding: 40px; opacity: 0.5;">Cargando configuración de slides...</div>
+    </div>
+
+    <!-- Info para conexión -->
+    <div class="card" style="margin-top: 40px; background: rgba(0,0,0,0.2);">
+        <h4 style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px;">🔗 URL PARA PANTALLAS PÚBLICAS</h4>
+        <div
+            style="background: var(--darker); padding: 12px; border-radius: 8px; font-family: monospace; color: var(--primary); display: flex; justify-content: space-between;">
+            <span>{{ request.url.scheme }}://{{ request.url.hostname }}:{{ request.url.port
+                }}/api/v1/pantallas/slides/secuencia</span>
+            <span style="opacity: 0.5;">Copiar</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+async function cargarSlides() {
+try {
+const res = await fetch('/api/v1/pantallas/slides');
+const slides = await res.json();
+const container = document.getElementById('slides-container');
+container.innerHTML = '';
+
+slides.sort((a, b) => a.orden - b.orden).forEach(slide => {
+const card = document.createElement('div');
+card.className = 'card';
+card.style.display = 'flex';
+card.style.alignItems = 'center';
+card.style.gap = '20px';
+card.style.padding = '16px 24px';
+card.style.background = slide.activo ? 'var(--glass)' : 'rgba(0,0,0,0.3)';
+card.style.border = slide.activo ? '1px solid var(--glass-border)' : '1px solid transparent';
+
+card.innerHTML = `
+<div style="font-size: 1.5rem; opacity: 0.3;">#${slide.orden}</div>
+<div style="flex: 1;">
+    <h4 style="margin: 0; color: ${slide.activo ? 'var(--light)' : '#475569'};">${slide.nombre}</h4>
+    <span style="font-size: 0.7rem; color: #94a3b8;">CLAVE: ${slide.clave}</span>
+</div>
+<div style="display: flex; align-items: center; gap: 24px;">
+    <div>
+        <label style="font-size: 0.6rem; color: #94a3b8; display: block; margin-bottom: 4px;">DURACIÓN</label>
+        <input type="number" value="${slide.duracion}"
+            onchange="actualizarSlide(${slide.id}, {duracion: parseInt(this.value)})"
+            style="width: 60px; background: var(--darker); border: 1px solid var(--glass-border); color: var(--light); padding: 4px 8px; border-radius: 6px;">
+        <span style="font-size: 0.7rem; color: #94a3b8;">seg</span>
+    </div>
+    <button class="btn ${slide.activo ? 'btn-ghost' : 'btn-primary'}" style="min-width: 120px; font-size: 0.7rem;"
+        onclick="actualizarSlide(${slide.id}, {activo: ${!slide.activo}})">
+        ${slide.activo ? '🔴 DESACTIVAR' : '🟢 ACTIVAR'}
+    </button>
+</div>
+`;
+container.appendChild(card);
+});
+} catch(err) { console.error(err); }
+}
+
+async function actualizarSlide(id, data) {
+try {
+const res = await fetch(\`/api/v1/pantallas/slides/\${id}\`, {
+method: 'PUT',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(data)
+});
+if (res.ok) cargarSlides();
+} catch(err) { console.error(err); }
+}
+
+document.addEventListener('DOMContentLoaded', cargarSlides);
+{% endblock %}

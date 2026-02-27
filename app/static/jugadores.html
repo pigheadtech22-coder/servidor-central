@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Jugadores - PADELSYS{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="section-title">👥 Gestión de Jugadores</div>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ jugadores|length }}</div>
+            <div class="stat-label">Total Jugadores</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ jugadores|selectattr('partidos_jugados',
+                'number')|sum(attribute='partidos_jugados') }}</div>
+            <div class="stat-label">Partidos Jugados</div>
+        </div>
+        <div class="stat-card">
+            {% set total_p = jugadores|selectattr('partidos_jugados', 'number')|sum(attribute='partidos_jugados') %}
+            {% set total_g = jugadores|selectattr('partidos_ganados', 'number')|sum(attribute='partidos_ganados') %}
+            <div class="stat-number">{{ (total_g / total_p * 100)|round(1) if total_p > 0 else 0 }}%</div>
+            <div class="stat-label">% Victoria Global</div>
+        </div>
+    </div>
+
+    <div class="card" style="display: flex; gap: 16px; margin-bottom: 32px; flex-wrap: wrap; align-items: center;">
+        <input type="text" class="btn btn-ghost"
+            style="flex: 1; text-align: left; padding: 12px 20px; color: var(--light);"
+            placeholder="🔍 Buscar por nombre..." id="filtro-nombre">
+        <select class="btn btn-ghost" id="filtro-categoria"
+            style="padding: 12px 20px; color: var(--light); background: var(--darker);">
+            <option value="">Todas las categorías</option>
+            <option value="1RA">1RA</option>
+            <option value="2DA">2DA</option>
+            <option value="3RA">3RA</option>
+            <option value="4TA">4TA</option>
+            <option value="5TA">5TA</option>
+            <option value="6TA">6TA</option>
+        </select>
+        <button class="btn btn-primary" onclick="openModal('modal-jugador')">+ Nuevo Jugador</button>
+    </div>
+
+    {% if jugadores %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;"
+        id="jugadores-grid">
+        {% for jugador in jugadores %}
+        <div class="card player-card"
+            style="position: relative; border-left: 4px solid var(--primary); transition: all 0.3s;"
+            data-nombre="{{ jugador.nombre }}" data-categoria="{{ jugador.categoria }}"
+            data-telefono="{{ jugador.telefono or '' }}" data-id="{{ jugador.id }}">
+
+            <div style="display: flex; gap: 16px; align-items: center; margin-bottom: 20px;">
+                <div
+                    style="width: 60px; height: 60px; border-radius: 16px; background: var(--darker); overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.5rem; color: var(--secondary); border: 1px solid var(--glass-border);">
+                    {% if jugador.foto and jugador.foto != '/jugadores/default.png' %}
+                    <img src="{{ jugador.foto }}" style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    {{ jugador.nombre[0]|upper }}
+                    {% endif %}
+                </div>
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem; color: var(--light);">{{ jugador.nombre }}</h3>
+                    <div style="display: flex; gap: 6px; margin-top: 4px;">
+                        <span class="badge badge-primary">{{ jugador.categoria }}</span>
+                        <span class="badge badge-secondary">R:{{ jugador.ranking_club if modo_sistema == 'club' else
+                            jugador.ranking_torneo }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 1.2rem; font-weight: 800; color: var(--light);">{{ jugador.partidos_jugados
+                        }}</div>
+                    <div style="font-size: 0.6rem; text-transform: uppercase; color: #94a3b8;">Partidos</div>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 1.2rem; font-weight: 800; color: var(--primary);">{{ jugador.partidos_ganados
+                        }}</div>
+                    <div style="font-size: 0.6rem; text-transform: uppercase; color: #94a3b8;">Ganados</div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 8px;">
+                <button class="btn btn-ghost" style="flex: 1; font-size: 0.8rem;"
+                    onclick="editarJugador({{ jugador.id }})">EDITAR</button>
+                <button class="btn btn-ghost" style="flex: 1; font-size: 0.8rem;"
+                    onclick="verEstadisticas({{ jugador.id }})">STATS</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 60px;">
+        <div style="font-size: 3rem; margin-bottom: 16px;">👥</div>
+        <h3>No hay jugadores registrados</h3>
+        <p style="color: #94a3b8;">Añade jugadores para gestionar sus rankings y categorías.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para Jugador (Nuevo/Editar) -->
+<div id="modal-jugador" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('modal-jugador')">&times;</span>
+        <h2 id="modal-title" class="section-title">👤 Gestionar Jugador</h2>
+        <form id="form-jugador" onsubmit="guardarJugador(event)">
+            <input type="hidden" id="jugador-id">
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; color: var(--secondary);">Nombre Completo</label>
+                <input type="text" id="nombre" required class="btn btn-ghost"
+                    style="width: 100%; text-align: left; color: var(--light);">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 8px; color: var(--secondary);">Categoría</label>
+                    <select id="categoria" class="btn btn-ghost"
+                        style="width: 100%; color: var(--light); background: var(--darker);">
+                        <option value="1RA">1RA</option>
+                        <option value="2DA">2DA</option>
+                        <option value="3RA">3RA</option>
+                        <option value="4TA">4TA</option>
+                        <option value="5TA">5TA</option>
+                        <option value="6TA" selected>6TA</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label style="display: block; margin-bottom: 8px; color: var(--secondary);">Teléfono</label>
+                    <input type="text" id="telefono" class="btn btn-ghost"
+                        style="width: 100%; text-align: left; color: var(--light);">
+                </div>
+            </div>
+            <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 32px;">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('modal-jugador')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">Guardar Jugador</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+function aplicarFiltros() {
+const q = document.getElementById('filtro-nombre').value.toLowerCase();
+const cat = document.getElementById('filtro-categoria').value;
+const cards = document.querySelectorAll('.player-card');
+
+cards.forEach(card => {
+const nombre = card.getAttribute('data-nombre');
+const categoria = card.getAttribute('data-categoria');
+
+const matchesQ = !q || nombre.includes(q);
+const matchesCat = !cat || categoria === cat;
+
+card.style.display = (matchesQ && matchesCat) ? 'block' : 'none';
+});
+}
+
+document.getElementById('filtro-nombre').addEventListener('input', aplicarFiltros);
+document.getElementById('filtro-categoria').addEventListener('change', aplicarFiltros);
+
+async function guardarJugador(e) {
+e.preventDefault();
+const id = document.getElementById('jugador-id').value;
+const data = {
+nombre: document.getElementById('nombre').value,
+categoria: document.getElementById('categoria').value,
+telefono: document.getElementById('telefono').value
+};
+
+const url = id ? `/api/v1/jugadores/${id}` : '/api/v1/jugadores/';
+const method = id ? 'PUT' : 'POST';
+
+try {
+const res = await fetch(url, {
+method: method,
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(data)
+});
+if (res.ok) location.reload();
+else alert('Error al guardar jugador');
+} catch (err) {
+console.error(err);
+}
+}
+
+function editarJugador(id) {
+const card = document.querySelector(`.player-card[data-id="${id}"]`);
+if (!card) return;
+
+document.getElementById('modal-title').textContent = '✏️ Editar Jugador';
+document.getElementById('jugador-id').value = id;
+document.getElementById('nombre').value = card.getAttribute('data-nombre');
+document.getElementById('categoria').value = card.getAttribute('data-categoria');
+document.getElementById('telefono').value = card.getAttribute('data-telefono');
+
+openModal('modal-jugador');
+}
+
+function verEstadisticas(id) {
+alert('Estadísticas para el jugador ' + id + ' próximamente...');
+}
+{% endblock %}

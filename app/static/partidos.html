@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Partidos - PADELSYS{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="header-top" style="margin-bottom: 32px;">
+        <h2 class="section-title">🏸 Gestión de Partidos</h2>
+        <button class="btn btn-primary" onclick="openModal('modal-partido')">+ Programar Partido</button>
+    </div>
+
+    <!-- Filtros de búsqueda -->
+    <div class="card" style="display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap;">
+        <input type="text" class="btn btn-ghost"
+            style="flex: 1; text-align: left; padding: 12px 20px; color: var(--light);"
+            placeholder="🔍 Buscar por jugador..." id="buscar-jugador">
+        <select class="btn btn-ghost" id="filtro-tipo"
+            style="background: var(--darker); color: var(--light); padding: 12px 20px;">
+            <option value="">Cualquier Tipo</option>
+            <option value="club">Club (Normal)</option>
+            <option value="torneo">Torneo</option>
+            <option value="clase">Clase / Entrenamiento</option>
+        </select>
+    </div>
+
+    {% if partidos %}
+    <div class="table-container">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Estado</th>
+                    <th>Cancha</th>
+                    <th>Jugadores</th>
+                    <th>Resultado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in partidos %}
+                <tr class="partido-row"
+                    data-jugadores="{{ p.jugador1.nombre if p.jugador1 }} {{ p.jugador2.nombre if p.jugador2 }} {{ p.jugador3.nombre if p.jugador3 }} {{ p.jugador4.nombre if p.jugador4 }}"
+                    data-tipo="{{ p.tipo_partido }}">
+                    <td>
+                        <span
+                            class="badge {% if p.estado == 'en_progreso' %}badge-primary{% elif p.estado == 'finalizado' %}badge-ghost{% else %}badge-secondary{% endif %}">
+                            {{ p.estado|replace('_', ' ')|upper }}
+                        </span>
+                        <div style="font-size: 0.6rem; opacity: 0.5; margin-top: 4px;">{{ p.tipo_partido|upper }}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight: 800; color: var(--secondary);">C#{{ p.cancha_numero }}</div>
+                        <div style="font-size: 0.7rem; opacity: 0.5;">{{ p.fecha_programada.strftime('%H:%M') }}</div>
+                    </td>
+                    <td>
+                        <div style="font-size: 0.85rem; line-height: 1.4;">
+                            <span style="color: var(--light);">{{ p.jugador1.nombre if p.jugador1 else '-' }} & {{
+                                p.jugador2.nombre if p.jugador2 else '-' }}</span>
+                            <br><span style="opacity: 0.4;">vs</span><br>
+                            <span style="color: var(--light);">{{ p.jugador3.nombre if p.jugador3 else '-' }} & {{
+                                p.jugador4.nombre if p.jugador4 else '-' }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-size: 1.2rem; font-weight: 800; color: var(--primary);">
+                            {{ p.sets_equipo1 }} - {{ p.sets_equipo2 }}
+                        </div>
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-ghost" style="padding: 6px 12px;"
+                                onclick="gestionarResultado({{ p.id }})">⚙️ MARCADOR</button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 60px;">
+        <div style="font-size: 3rem; margin-bottom: 16px;">🎾</div>
+        <h3>Sin partidos programados</h3>
+        <p style="color: #94a3b8;">Los partidos creados aquí alimentan las pantallas del club.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal para Partido -->
+<div id="modal-partido" class="modal">
+    <div class="modal-content" style="max-width: 800px;">
+        <span class="close" onclick="closeModal('modal-partido')">&times;</span>
+        <h2 class="section-title">🎾 Programar Encuentro</h2>
+        <form onsubmit="crearPartido(event)">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <div class="form-group">
+                    <label style="color: var(--secondary); font-size: 0.8rem;">TIPO DE PARTIDO</label>
+                    <select id="tipo_partido" class="btn btn-ghost"
+                        style="width: 100%; background: var(--darker); color: var(--light);">
+                        <option value="club" selected>Club (Suma Ranking Club)</option>
+                        <option value="torneo">Torneo (Suma Ranking Torneo)</option>
+                        <option value="libre">Libre (Amistoso)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label style="color: var(--secondary); font-size: 0.8rem;">CANCHA</label>
+                    <input type="number" id="cancha_numero" value="1" min="1" class="btn btn-ghost"
+                        style="width: 100%; color: var(--light);">
+                </div>
+            </div>
+
+            <div
+                style="background: rgba(0,0,0,0.2); padding: 20px; border-radius: 20px; border: 1px solid var(--glass-border); margin-bottom: 24px;">
+                <h4 style="color: var(--primary); font-size:0.8rem; margin-bottom: 16px;">JUGADORES</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+                    <div>
+                        <label style="font-size: 0.7rem; opacity: 0.7;">EQUIPO 1</label>
+                        <select id="j1" class="btn btn-ghost"
+                            style="width:100%; margin-bottom: 8px; background: var(--darker); color: var(--light); text-align: left;">
+                            <option value="">Seleccionar...</option>
+                        </select>
+                        <select id="j2" class="btn btn-ghost"
+                            style="width:100%; background: var(--darker); color: var(--light); text-align: left;">
+                            <option value="">Opcional...</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size: 0.7rem; opacity: 0.7;">EQUIPO 2</label>
+                        <select id="j3" class="btn btn-ghost"
+                            style="width:100%; margin-bottom: 8px; background: var(--darker); color: var(--light); text-align: left;">
+                            <option value="">Seleccionar...</option>
+                        </select>
+                        <select id="j4" class="btn btn-ghost"
+                            style="width:100%; background: var(--darker); color: var(--light); text-align: left;">
+                            <option value="">Opcional...</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" class="btn btn-ghost" onclick="closeModal('modal-partido')">Cancelar</button>
+                <button type="submit" class="btn btn-primary">GUARDAR PARTIDO</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+// Cargar lista de jugadores al abrir modal
+async function cargarJugadores() {
+try {
+const res = await fetch('/api/v1/jugadores/');
+const jugadores = await res.json();
+const selects = ['j1', 'j2', 'j3', 'j4'];
+selects.forEach(sid => {
+const s = document.getElementById(sid);
+const val = s.value;
+s.innerHTML = '<option value="">' + (sid.includes('2') || sid.includes('4') ? 'Opcional...' : 'Seleccionar...') + '
+</option>';
+jugadores.forEach(j => {
+s.innerHTML += `<option value="${j.id}">${j.nombre} (${j.categoria})</option>`;
+});
+s.value = val;
+});
+} catch(err) { console.error(err); }
+}
+
+document.addEventListener('DOMContentLoaded', cargarJugadores);
+
+async function crearPartido(e) {
+e.preventDefault();
+const data = {
+tipo_partido: document.getElementById('tipo_partido').value,
+cancha_numero: parseInt(document.getElementById('cancha_numero').value),
+jugador1_id: parseInt(document.getElementById('j1').value) || null,
+jugador2_id: parseInt(document.getElementById('j2').value) || null,
+jugador3_id: parseInt(document.getElementById('j3').value) || null,
+jugador4_id: parseInt(document.getElementById('j4').value) || null,
+fecha_programada: new Date().toISOString()
+};
+
+try {
+const res = await fetch('/api/v1/partidos/', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify(data)
+});
+if (res.ok) location.reload();
+else alert('Error al programar partido');
+} catch (err) { console.error(err); }
+}
+
+function gestionarResultado(id) {
+alert('Abriendo controlador de marcador para partido ' + id + '...');
+}
+{% endblock %}

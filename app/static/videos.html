@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Publicidad y Videos - PADELSYS{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="header-top" style="margin-bottom: 32px;">
+        <h2 class="section-title">🎬 Gestión de Videos</h2>
+        <button class="btn btn-primary" onclick="document.getElementById('file-upload').click()">+ Subir Video</button>
+        <input type="file" id="file-upload" style="display: none;" accept="video/*" onchange="subirVideo(this)">
+    </div>
+
+    <div class="card"
+        style="margin-bottom: 32px; border-left: 4px solid var(--secondary); background: linear-gradient(90deg, var(--glass), transparent);">
+        <h3 style="color: var(--light); margin-bottom: 8px;">Campaña Publicitaria</h3>
+        <p style="color: #94a3b8; font-size: 0.9rem;">Gestiona los clips que se reproducen en el slide de "Publicidad"
+            de las pantallas públicas.</p>
+    </div>
+
+    {% if videos %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px;">
+        {% for v in videos %}
+        <div class="card" style="padding: 0; overflow: hidden; border: 1px solid var(--glass-border);">
+            <div
+                style="height: 160px; background: #000; display: flex; align-items: center; justify-content: center; position: relative;">
+                <div style="font-size: 3rem; opacity: 0.3;">🎬</div>
+                <div
+                    style="position: absolute; bottom: 12px; right: 12px; background: rgba(0,0,0,0.8); padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; color: white;">
+                    {{ v.duracion_segundos or '?' }}s
+                </div>
+                {% if v.activo %}
+                <div
+                    style="position: absolute; top: 12px; left: 12px; background: var(--primary); width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 10px var(--primary);">
+                </div>
+                {% endif %}
+            </div>
+
+            <div style="padding: 20px;">
+                <h4 style="margin: 0; color: var(--light); font-size: 1.1rem;">{{ v.nombre }}</h4>
+                <p style="font-size: 0.8rem; color: #94a3b8; margin: 8px 0 20px;">{{ v.descripcion or 'Sin descripción
+                    específica.' }}</p>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+                    <div style="background: var(--darker); padding: 8px; border-radius: 8px; text-align: center;">
+                        <span style="font-size: 0.6rem; color: #64748b; display: block;">ORDEN</span>
+                        <span style="font-weight: 800; color: var(--secondary);">#{{ v.orden }}</span>
+                    </div>
+                    <div style="background: var(--darker); padding: 8px; border-radius: 8px; text-align: center;">
+                        <span style="font-size: 0.6rem; color: #64748b; display: block;">ESTADO</span>
+                        <span style="font-weight: 800; color: {{ 'var(--primary)' if v.activo else '#ef4444' }};">{{
+                            'ACTIVO' if v.activo else 'OFF' }}</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-ghost" style="flex: 1; font-size: 0.7rem;"
+                        onclick="previsualizar({{ v.id }})">VER</button>
+                    <button class="btn btn-ghost" style="flex: 1; font-size: 0.7rem; color: #ef4444;"
+                        onclick="eliminarVideo({{ v.id }})">BORRAR</button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 60px;">
+        <div style="font-size: 3rem; margin-bottom: 16px;">🎞️</div>
+        <h3>No hay contenido publicitario</h3>
+        <p style="color: #94a3b8;">Sube videos MP4 para activar el slide de publicidad.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+function subirVideo(input) {
+if (input.files && input.files[0]) {
+alert('Subiendo ' + input.files[0].name + '... (Lógica de API conectada)');
+// Implementar fetch a /api/v1/videos
+}
+}
+
+function previsualizar(id) {
+alert('Previsualizando clip #' + id);
+}
+
+function eliminarVideo(id) {
+if(confirm('¿Deseas eliminar este video?')) {
+// Implementar DELETE
+}
+}
+{% endblock %}

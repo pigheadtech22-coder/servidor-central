@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+
+{% block title %}Hardware Hub - PADELSYS{% endblock %}
+
+{% block page_title %}📡 HARDWARE MANAGEMENT HUB{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hardware-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 24px;
+        margin-top: 20px;
+    }
+
+    .hardware-card {
+        background: var(--glass);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 24px;
+        transition: all 0.3s ease;
+    }
+
+    .hardware-card.online {
+        border-left: 4px solid #10b981;
+    }
+
+    .hardware-card.offline {
+        border-left: 4px solid #ef4444;
+    }
+
+    .tech-pill {
+        background: rgba(0, 0, 0, 0.3);
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-family: 'Inter', monospace;
+        font-size: 0.65rem;
+        color: #94a3b8;
+    }
+
+    .ping-display {
+        font-size: 0.7rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-content {
+        background: var(--dark);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 40px;
+        width: 90%;
+        max-width: 500px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="header-top"
+    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+    <div>
+        <h2 class="section-title" style="margin: 0;">MARCADORES RASPBERRY PI</h2>
+        <p style="color: #64748b; font-size: 0.8rem;">Monitoriza y conecta tus dispositivos de puntuación en tiempo
+            real.</p>
+    </div>
+    <button onclick="openAddModal()" class="btn btn-primary">+ CONECTAR MARCADOR MANUAL</button>
+</div>
+
+<!-- STATS BAR -->
+<div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 40px;">
+    <div class="card" style="padding: 15px 25px;">
+        <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; letter-spacing: 0.1em;">DISPOSITIVOS</div>
+        <div style="font-size: 1.5rem; font-weight: 900; margin-top: 5px;">{{ total_marcadores }}</div>
+    </div>
+    <div class="card" style="padding: 15px 25px;">
+        <div style="font-size: 0.65rem; color: #64748b; font-weight: 800; letter-spacing: 0.1em;">ESTADO ONLINE</div>
+        <div style="font-size: 1.5rem; font-weight: 900; color: #10b981; margin-top: 5px;">{{ marcadores_online }}</div>
+    </div>
+</div>
+
+<div class="hardware-grid">
+    {% for m in marcadores %}
+    <div class="hardware-card {{ m.estado_conexion }}">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <div>
+                <div style="font-weight: 800; font-size: 1.1rem; color: var(--light);">{{ m.marcador.nombre }}</div>
+                <div class="tech-pill" style="margin-top: 5px;">CANCHA {{ m.marcador.cancha_numero }}</div>
+            </div>
+            <span class="badge {{ 'badge-primary' if m.estado_conexion == 'online' else 'badge-ghost' }}"
+                style="font-size: 0.6rem;">
+                {{ m.estado_conexion|upper }}
+            </span>
+        </div>
+
+        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label style="font-size: 0.6rem; color: #64748b; display: block; margin-bottom: 4px;">LOCAL
+                        IP</label>
+                    <div style="font-size: 0.85rem; font-family: monospace; font-weight: 700;">{{ m.marcador.ip_address
+                        }}</div>
+                </div>
+                <div>
+                    <label style="font-size: 0.6rem; color: #64748b; display: block; margin-bottom: 4px;">PUERTO</label>
+                    <div style="font-size: 0.85rem; font-family: monospace; font-weight: 700;">{{ m.marcador.puerto }}
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px;">
+                <div class="ping-display">
+                    <i>⏱️</i> Última respuesta: {{ m.tiempo_desconectado_minutos }} min.
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <button onclick="pingMarcador('{{ m.marcador.cancha_numero }}')" class="btn btn-ghost"
+                style="flex: 1; font-size: 0.7rem; padding: 10px;">PROBAR PING</button>
+            <button onclick="window.open('{{ m.url_acceso }}', '_blank')" class="btn btn-ghost"
+                style="flex: 1; font-size: 0.7rem; padding: 10px;">ACCESO WEB</button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- MANUAL ADD MODAL -->
+<div id="addModal" class="modal">
+    <div class="modal-content">
+        <h2 style="margin-bottom: 10px; font-weight: 900; color: var(--primary);">CONECTAR RASPBERRY PI</h2>
+        <p style="color: #64748b; font-size: 0.85rem; margin-bottom: 30px;">Ingresa la IP local de tu marcador para que
+            la App Central lo reconozca.</p>
+
+        <form id="addMarkerForm" onsubmit="handleAddMarker(event)">
+            <div style="margin-bottom: 20px;">
+                <label class="player-slot">NÚMERO DE CANCHA</label>
+                <input type="number" id="newCancha" placeholder="Ej: 1" class="btn btn-ghost"
+                    style="width: 100%; text-align: left;" required>
+            </div>
+            <div style="margin-bottom: 20px;">
+                <label class="player-slot">DIRECCIÓN IP (Local)</label>
+                <input type="text" id="newIP" placeholder="Ej: 192.168.1.15" class="btn btn-ghost"
+                    style="width: 100%; text-align: left;" required>
+            </div>
+            <div style="margin-bottom: 30px;">
+                <label class="player-slot">PUERTO (Default: 5173)</label>
+                <input type="number" id="newPort" value="5173" class="btn btn-ghost"
+                    style="width: 100%; text-align: left;">
+            </div>
+
+            <div style="display: flex; gap: 15px;">
+                <button type="button" onclick="closeAddModal()" class="btn btn-ghost" style="flex: 1;">CANCELAR</button>
+                <button type="submit" class="btn btn-primary" style="flex: 2; justify-content: center;">VINCULAR
+                    DISPOSITIVO</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+function openAddModal() {
+document.getElementById('addModal').style.display = 'flex';
+}
+
+function closeAddModal() {
+document.getElementById('addModal').style.display = 'none';
+}
+
+async function handleAddMarker(event) {
+event.preventDefault();
+const cancha = document.getElementById('newCancha').value;
+const ip = document.getElementById('newIP').value;
+const puerto = document.getElementById('newPort').value;
+
+try {
+const resp = await fetch('/api/v1/marcadores/registrar', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({
+cancha_numero: parseInt(cancha),
+ip_address: ip,
+puerto: parseInt(puerto),
+nombre: `Marcador Cancha ${cancha}`
+})
+});
+
+if (resp.ok) {
+alert("¡Marcador vinculado correctamente!");
+location.reload();
+} else {
+alert("Error al vincular el marcador.");
+}
+} catch (e) {
+alert("Error de conexión.");
+}
+}
+
+async function pingMarcador(cancha) {
+try {
+const resp = await fetch(`/api/v1/marcadores/ping/${cancha}`, { method: 'POST' });
+const data = await resp.json();
+if (data.status === 'online') {
+alert(`✅ Marcador Online! Tiempo de respuesta: ${data.response_time_ms}ms`);
+location.reload();
+} else {
+alert(`❌ Marcador Offline o error: ${data.error || 'No responde'}`);
+}
+} catch (e) {
+alert("Error al intentar contactar al servidor.");
+}
+}
+
+// Auto-refresh cada minuto para el estado en vivo de hardware
+setInterval(() => {
+if(document.getElementById('addModal').style.display !== 'flex') {
+location.reload();
+}
+}, 60000);
+{% endblock %}

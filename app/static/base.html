@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}PADELSYS | Command Center{% endblock %}</title>
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap">
+    <style>
+        :root {
+            --primary: #c9ff00;
+            /* Neon Lime */
+            --secondary: #00f0ff;
+            /* Cyber Blue */
+            --darker: #050506;
+            --dark: #0a0a0c;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --light: #f8fafc;
+            --sidebar-width: 260px;
+            --header-height: 70px;
+            --accent-gradient: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--darker);
+            color: var(--light);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* SIDEBAR STYLES */
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--dark);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+        }
+
+        .sidebar-header {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 900;
+            letter-spacing: -0.05em;
+            background: var(--accent-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-container {
+            flex: 1;
+            padding: 0 15px;
+            overflow-y: auto;
+        }
+
+        .nav-group {
+            margin-bottom: 25px;
+        }
+
+        .nav-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            padding: 0 15px 10px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            color: #94a3b8;
+            text-decoration: none;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 4px;
+        }
+
+        .nav-item:hover {
+            color: var(--light);
+            background: var(--glass);
+        }
+
+        .nav-item.active {
+            background: rgba(201, 255, 0, 0.05);
+            color: var(--primary);
+            border: 1px solid rgba(201, 255, 0, 0.1);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--glass-border);
+        }
+
+        /* MAIN WRAPPER */
+        .main-wrapper {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            height: var(--header-height);
+            background: rgba(10, 10, 12, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .page-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* CONTENT STYLES */
+        .content {
+            padding: 40px;
+            animation: slideIn 0.4s ease-out;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* REUSABLE PREMIUM COMPONENTS */
+        .card {
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            transition: border-color 0.3s;
+        }
+
+        .card:hover {
+            border-color: var(--glass-border);
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: var(--darker);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(201, 255, 0, 0.2);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--glass-border);
+            color: #94a3b8;
+        }
+
+        .btn-ghost:hover {
+            background: var(--glass);
+            color: var(--light);
+            border-color: var(--light);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        /* MODE SWITCHER */
+        .mode-switcher {
+            display: flex;
+            background: var(--darker);
+            padding: 4px;
+            border-radius: 12px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .mode-btn {
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 900;
+            text-decoration: none;
+            color: #475569;
+            transition: all 0.3s;
+        }
+
+        .mode-btn.active.club {
+            background: rgba(201, 255, 0, 0.1);
+            color: var(--primary);
+        }
+
+        .mode-btn.active.torneo {
+            background: rgba(0, 240, 255, 0.1);
+            color: var(--secondary);
+        }
+
+        /* CUSTOM SCROLLBAR */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--glass-border);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+
+        /* MODAL STYLES */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: var(--dark);
+            margin: 5% auto;
+            padding: 40px;
+            border: 1px solid var(--glass-border);
+            width: 50%;
+            max-width: 600px;
+            border-radius: 24px;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .close {
+            position: absolute;
+            right: 25px;
+            top: 20px;
+            color: #64748b;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: var(--light);
+        }
+
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 80px;
+            }
+
+            .sidebar-header .logo-text,
+            .nav-label,
+            .nav-item span {
+                display: none;
+            }
+
+            .sidebar-header {
+                padding: 20px 0;
+            }
+
+            .main-wrapper {
+                margin-left: 80px;
+            }
+
+            .nav-item {
+                justify-content: center;
+                padding: 15px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h1 class="logo-text">PADELSYS</h1>
+        </div>
+
+        <nav class="nav-container">
+            <!-- MONITOR GROUP -->
+            <div class="nav-group">
+                <div class="nav-label">CONTROL EN VIVO</div>
+                <a href="/dashboard" class="nav-item {% if request.url.path == '/dashboard' %}active{% endif %}">
+                    <i>🏠</i> <span>Dashboard</span>
+                </a>
+                <a href="/dashboard/gestion-canchas"
+                    class="nav-item {% if request.url.path == '/dashboard/gestion-canchas' %}active{% endif %}">
+                    <i>🏟️</i> <span>Canchas en Vivo</span>
+                </a>
+                <a href="/dashboard/horarios"
+                    class="nav-item {% if request.url.path == '/dashboard/horarios' %}active{% endif %}">
+                    <i>⏰</i> <span>Horarios Hoy</span>
+                </a>
+            </div>
+
+            <!-- CONTENIDO GROUP -->
+            <div class="nav-group">
+                <div class="nav-label">EL CEREBRO</div>
+                <a href="/dashboard/pantallas"
+                    class="nav-item {% if request.url.path == '/dashboard/pantallas' %}active{% endif %}">
+                    <i>🧠</i> <span>Gestión Screens</span>
+                </a>
+                <a href="/dashboard/videos"
+                    class="nav-item {% if request.url.path == '/dashboard/videos' %}active{% endif %}">
+                    <i>🎬</i> <span>Publicidad</span>
+                </a>
+            </div>
+
+            <!-- ADMIN GROUP -->
+            <div class="nav-group">
+                <div class="nav-label">ADMINISTRACIÓN</div>
+                <a href="/dashboard/jugadores"
+                    class="nav-item {% if request.url.path == '/dashboard/jugadores' %}active{% endif %}">
+                    <i>👥</i> <span>Jugadores</span>
+                </a>
+                <a href="/dashboard/torneos"
+                    class="nav-item {% if request.url.path == '/dashboard/torneos' %}active{% endif %}">
+                    <i>🏆</i> <span>Torneos</span>
+                </a>
+                <a href="/dashboard/partidos"
+                    class="nav-item {% if request.url.path == '/dashboard/partidos' %}active{% endif %}">
+                    <i>🎾</i> <span>Historial Partidos</span>
+                </a>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div style="font-size: 0.6rem; color: #475569; letter-spacing: 0.05em; text-align: center;">
+                v2.0 COMMAND CENTER
+            </div>
+        </div>
+    </aside>
+
+    <div class="main-wrapper">
+        <header class="top-bar">
+            <div class="page-title">
+                {% block page_title %}PANEL DE CONTROL{% endblock %}
+            </div>
+
+            <div class="header-actions">
+                <div style="text-align: right; margin-right: 15px;">
+                    <div id="top-clock" style="font-weight: 800; font-size: 0.9rem; color: var(--light);">00:00:00</div>
+                    <div style="font-size: 0.6rem; color: #64748b; text-transform: uppercase;">Central Server Time</div>
+                </div>
+
+                <div class="mode-switcher">
+                    <a href="/dashboard/config/cambiar-modo/club"
+                        class="mode-btn club {% if modo_sistema == 'club' %}active{% endif %}">CLUB</a>
+                    <a href="/dashboard/config/cambiar-modo/torneo"
+                        class="mode-btn torneo {% if modo_sistema == 'torneo' %}active{% endif %}">TORNEO</a>
+                </div>
+            </div>
+        </header>
+
+        <main class="content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-ES', { hour12: false });
+            const clockEl = document.getElementById('top-clock');
+            if (clockEl) clockEl.innerText = timeStr;
+        }
+        setInterval(updateClock, 1000);
+        function openModal(id) {
+            document.getElementById(id).style.display = 'block';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        updateClock();
+
+        {% block scripts %} {% endblock %}
+    </script>
+</body>
+
+</html>
