@@ -118,6 +118,70 @@ async def registrar_marcador(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error registrando marcador: {str(e)}")
 
+
+@router.post("/heartbeat")
+async def heartbeat_marcador(
+    marcador_data: dict,
+    request: Request,
+    db: Session = Depends(get_db)
+):
+    """Heartbeat ligero para auto-vinculación de marcador por IP desde TV sin teclado/mouse."""
+    try:
+      client_ip = request.client.host
+      provided_ip = (marcador_data.get('ip_address') or '').strip()
+      if provided_ip:
+          try:
+              ipaddress.ip_address(provided_ip)
+              client_ip = provided_ip
+          except ValueError:
+              pass
+
+      marcador = db.query(MarcadorRegistrado).filter(
+          MarcadorRegistrado.ip_address == client_ip
+      ).first()
+
+      if not marcador:
+          return {
+              "status": "unassigned",
+              "message": "Marcador no asignado en servidor central",
+              "ip_detectada": client_ip,
+              "assigned": False
+          }
+
+      marcador.ultima_conexion = datetime.now()
+      if marcador_data.get('version'):
+          marcador.version = marcador_data.get('version')
+      if marcador_data.get('nombre'):
+          marcador.nombre = marcador_data.get('nombre')
+      if marcador_data.get('puerto'):
+          marcador.puerto = marcador_data.get('puerto')
+
+      db.commit()
+      db.refresh(marcador)
+
+      if not marcador.activo:
+          return {
+              "status": "desconectado",
+              "message": "Marcador desautorizado por administrador",
+              "ip_detectada": client_ip,
+              "assigned": False,
+              "activo": False
+          }
+
+      return {
+          "status": "assigned",
+          "message": "Marcador asignado por servidor central",
+          "assigned": True,
+          "activo": True,
+          "ip_detectada": client_ip,
+          "marcador_id": marcador.id,
+          "cancha_numero": marcador.cancha_numero,
+          "nombre": marcador.nombre,
+          "puerto": marcador.puerto
+      }
+    except Exception as e:
+      raise HTTPException(status_code=500, detail=f"Error en heartbeat de marcador: {str(e)}")
+
 @router.get("/lista")
 async def listar_marcadores(
     activos_solo: bool = True,
