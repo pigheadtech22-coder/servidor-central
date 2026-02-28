@@ -200,13 +200,22 @@ async def estado_cancha(cancha_numero: int, db: Session = Depends(get_db)):
     from .database import Partido, Jugador
     from sqlalchemy import and_
     
-    # Buscar partido activo en esta cancha
+    # Buscar partido activo en esta cancha priorizando en_progreso
     partido_activo = db.query(Partido).filter(
         and_(
             Partido.cancha_numero == cancha_numero,
-            Partido.estado.in_(["programado", "en_progreso"])
+            Partido.estado == "en_progreso"
         )
-    ).first()
+    ).order_by(Partido.fecha_inicio.desc(), Partido.id.desc()).first()
+
+    # Si no hay partido en progreso, usar el próximo programado
+    if not partido_activo:
+        partido_activo = db.query(Partido).filter(
+            and_(
+                Partido.cancha_numero == cancha_numero,
+                Partido.estado == "programado"
+            )
+        ).order_by(Partido.fecha_programada.asc(), Partido.id.asc()).first()
     
     if not partido_activo:
         return {
