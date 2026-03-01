@@ -12,8 +12,9 @@ from datetime import datetime
 from typing import Set, Dict, Any, List
 
 from .database import get_db, crear_tablas, inicializar_configuraciones
-from .routers import jugadores, torneos, partidos, videos, dashboard, canchas, marcadores, pantallas, wizard
+from .routers import jugadores, torneos, partidos, videos, dashboard, canchas, marcadores, pantallas, wizard, mqtt_bridge
 from .database import SessionLocal
+from .mqtt_gateway import mqtt_bridge as mqtt_gateway_bridge
 
 # Crear la aplicación FastAPI
 app = FastAPI(
@@ -148,6 +149,13 @@ async def startup_event():
     finally:
         db.close()
 
+    mqtt_gateway_bridge.start()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    mqtt_gateway_bridge.stop()
+
 # Configurar archivos estáticos
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
@@ -165,6 +173,7 @@ app.include_router(pantallas.router, prefix="/api/v1/pantallas", tags=["pantalla
 app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(canchas.router, prefix="/canchas", tags=["canchas"])
 app.include_router(wizard.router, prefix="/api", tags=["wizard"])
+app.include_router(mqtt_bridge.router, prefix="/api/v1/mqtt", tags=["mqtt-bridge"])
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
